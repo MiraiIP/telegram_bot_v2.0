@@ -1,0 +1,40 @@
+# requirements.txt
+# 🔧 RAG-бот для документов с Telegram, AD и скриншотами
+
+# --- LangChain (новая модульная структура) ---
+langchain>=0.3.0
+langchain-core>=0.3.0
+langchain-community>=0.3.0
+langchain-chroma>=0.2.5   # ✅ Последняя доступная версия
+langchain-huggingface>=0.3.0
+langchain-ollama>=0.3.0
+
+# --- Векторная БД ---
+chromadb>=0.5.7
+
+# --- Модели и эмбеддинги ---
+sentence-transformers>=2.2.0
+ollama>=0.5.3
+
+# --- OCR и обработка PDF/DOCX ---
+PyPDF2>=3.0
+pillow>=10.0
+pytesseract>=0.3
+python-docx>=0.8
+easyocr>=1.7
+
+# --- Telegram ---
+python-telegram-bot>=21.0
+
+# --- Сетевые и системные ---
+requests>=2.30
+redis>=4.5
+watchdog>=3.0
+fastapi
+uvicorn[standard]
+
+# --- Active Directory ---
+python-ldap
+
+# --- CPU-совместимость ---
+numpy<2.0

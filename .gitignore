@@ -1,0 +1,29 @@
+# Виртуальные окружения
+venv/
+.venv/
+env/
+
+# Векторная БД и медиа
+chroma_db/
+media/
+processed/
+
+# Кэш и временные файлы
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+*.swp
+*.swo
+
+# Логи
+*.log
+
+# Переменные окружения
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
