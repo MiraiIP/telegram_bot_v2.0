@@ -20,6 +20,7 @@ def extract_text_from_image(image):
 
 def extract_images_from_pdf(pdf_path):
     images_data = []
+    ocr_texts_combined = ""  # Добавляем переменную для сбора всего OCR текста
     reader = PdfReader(pdf_path)
     pdf_name = Path(pdf_path).stem
 
@@ -51,6 +52,8 @@ def extract_images_from_pdf(pdf_path):
                     continue
 
                 ocr_text = extract_text_from_image(Image.open(img_path))
+                ocr_texts_combined += f"\n[OCR изображение {img_key}]: {ocr_text}\n"  # Добавляем OCR текст в общий текст
+                
                 images_data.append({
                     "page_num": page_num,
                     "order": image_counter,
@@ -63,4 +66,5 @@ def extract_images_from_pdf(pdf_path):
             except Exception as e:
                 print(f"Ошибка при обработке изображения: {e}")
 
-    return images_data
+    # Возвращаем кортеж: список изображений и общий OCR текст
+    return images_data, ocr_texts_combined

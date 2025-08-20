@@ -22,6 +22,7 @@ from auth.session import create_session, get_session, increment_login_attempts, 
 from dotenv import load_dotenv
 import os
 import json
+import re
 
 load_dotenv()
 
@@ -85,8 +86,14 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Заблокировано на 20 минут.")
         return
 
+    # Обработка авторизации
     if context.user_data.get("awaiting") == "login":
-        context.user_data["username"] = text
+        username = text
+        if not username:
+            await update.message.reply_text("Логин не может быть пустым. Введите логин:")
+            return
+        
+        context.user_data["username"] = username
         await update.message.reply_text("Введите пароль:")
         context.user_data["awaiting"] = "password"
         return
@@ -94,6 +101,10 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data.get("awaiting") == "password":
         username = context.user_data["username"]
         password = text
+        if not password:
+            await update.message.reply_text("Пароль не может быть пустым. Введите пароль:")
+            return
+            
         success, full_name = authenticate_user(username, password)
 
         if success:
@@ -108,8 +119,9 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     "❌ Доступ заблокирован на 20 минут."
                 )
             else:
+                remaining = 3 - attempts
                 await update.message.reply_text(
-                    f"❌ Ошибка. Осталось попыток: {3 - attempts}"
+                    f"❌ Ошибка аутентификации. Осталось попыток: {remaining}"
                 )
         return
 
@@ -123,38 +135,48 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    result = query_rag(text)
+    # Обработка запроса
+    try:
+        result = query_rag(text)
+        
+        answer = result.get("answer", "Извините, ответ не найден.")
+        source = result.get("source")
+        images = result.get("images", [])
+        link_to_document = result.get("link_to_document")
 
-    # Формируем ответ
-    answer = result.get("answer", "Извините, ответ не найден.")
-    source = result.get("source")
-    images = result.get("images", [])
+        # Формируем текст ответа
+        response_text = f"🔍 {answer}"
+        
+        if source:
+            response_text += f"\n\n📌 Источник: {source}"
+            
+        if link_to_document:
+            response_text += f"\n\n📎 Подробнее: {link_to_document}"
 
-    response_text = f"🔍 {answer}"
-    if source:
-        response_text += f"\n\n📌 Источник: {source}"
+        await update.message.reply_text(response_text)
 
-    await update.message.reply_text(response_text)
+        # Отправляем скриншоты
+        if images:
+            await update.message.reply_text("📷 Вот скриншоты из инструкции:")
+            for img in images:
+                img_path = img.get("img_path")
+                caption = img.get("caption", "Скриншот")
 
-    # Отправляем скриншоты по порядку
-    if images:
-        await update.message.reply_text("📎 Скриншоты из инструкции:")
-        for img in images:
-            img_path = img.get("img_path")
-            caption = img.get("caption", "Скриншот")
-
-            if img_path and os.path.exists(img_path):
-                try:
-                    with open(img_path, "rb") as photo:
-                        await context.bot.send_photo(
-                            chat_id=update.effective_chat.id,
-                            photo=photo,
-                            caption=caption
-                        )
-                except Exception as e:
-                    await update.message.reply_text(f"📷 Не удалось отправить: {caption}")
-            else:
-                await update.message.reply_text(f"📷 {caption} (файл не найден)")
+                if img_path and os.path.exists(img_path):
+                    try:
+                        with open(img_path, "rb") as photo:
+                            await context.bot.send_photo(
+                                chat_id=update.effective_chat.id,
+                                photo=photo,
+                                caption=caption
+                            )
+                    except Exception as e:
+                        await update.message.reply_text(f"📷 Не удалось отправить: {caption}")
+                else:
+                    await update.message.reply_text(f"📷 {caption} (файл не найден)")
+                    
+    except Exception as e:
+        await update.message.reply_text(f"Ошибка при обработке запроса: {str(e)}")
 
 
 def run_telegram():

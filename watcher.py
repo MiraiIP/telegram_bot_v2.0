@@ -39,7 +39,7 @@ class DocumentHandler(FileSystemEventHandler):
     def rebuild_db(self):
         """Переиндексировать все документы"""
         print("🔄 Перестройка базы знаний...")
-        # Удаляем старую Chroma (можно оптимизировать — обновлять по одному)
+        # Удаляем старую Chroma
         if Path(CHROMA_DIR).exists():
             import shutil
             shutil.rmtree(CHROMA_DIR)
